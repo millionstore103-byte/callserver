@@ -4,11 +4,21 @@ const fs = require('fs');
 
 let serviceAccount;
 try {
-  serviceAccount = JSON.parse(
-    fs.readFileSync('/etc/secrets/serviceAccount.json', 'utf8')
-  );
+  const path = '/etc/secrets/serviceAccount.json';
+  console.log('Ap eseye li:', path);
+  const content = fs.readFileSync(path, 'utf8');
+  console.log('Fichye jwenn! Longè:', content.length);
+  serviceAccount = JSON.parse(content);
+  console.log('JSON parse reyisi!');
 } catch (e) {
-  serviceAccount = require('./serviceAccount.json');
+  console.log('Erè secret file:', e.message);
+  try {
+    serviceAccount = require('./serviceAccount.json');
+    console.log('Itilize fichye lokal');
+  } catch (e2) {
+    console.error('Pa jwenn serviceAccount ditou!', e2.message);
+    process.exit(1);
+  }
 }
 
 admin.initializeApp({
