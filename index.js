@@ -1,6 +1,15 @@
 const express = require('express');
 const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccount.json');
+const fs = require('fs');
+
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(
+    fs.readFileSync('/etc/secrets/serviceAccount.json', 'utf8')
+  );
+} catch (e) {
+  serviceAccount = require('./serviceAccount.json');
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -9,12 +18,10 @@ admin.initializeApp({
 const app = express();
 app.use(express.json());
 
-// Route pou teste si sèvè a ap kouri
 app.get('/', (req, res) => {
   res.json({ status: 'CallServer ap kouri!' });
 });
 
-// Koute Firestore epi voye FCM
 const db = admin.firestore();
 
 db.collection('calls').onSnapshot(async (snapshot) => {
@@ -26,7 +33,6 @@ db.collection('calls').onSnapshot(async (snapshot) => {
       if (callData.status !== 'calling') return;
 
       try {
-        // Jwenn tout token FCM
         const usersSnapshot = await db.collection('users').get();
         const tokens = [];
 
@@ -37,7 +43,10 @@ db.collection('calls').onSnapshot(async (snapshot) => {
           }
         });
 
-        if (tokens.length === 0) return;
+        if (tokens.length === 0) {
+          console.log('Pa gen token FCM disponib');
+          return;
+        }
 
         const message = {
           tokens: tokens,
