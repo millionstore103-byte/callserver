@@ -1,0 +1,26 @@
+Future<void> _startCall(bool isVideo) async {
+    await [Permission.microphone, Permission.camera].request();
+    final callDoc = await _firestore.collection('calls').add({
+      'callerId': _auth.currentUser!.uid,
+      'callerName': widget.currentUserName,
+      'isVideo': isVideo,
+      'status': 'calling',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CallScreen(
+            channelName: 'millionstore_call',
+            userName: widget.currentUserName,
+            isVideo: isVideo,
+            callDocId: callDoc.id,
+            isCaller: true,
+          ),
+        ),
+      ).then((_) async {
+        await _firestore.collection('calls').doc(callDoc.id).delete();
+      });
+    }
+  }
